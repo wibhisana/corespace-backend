@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use App\Modules\IAM\Filament\Resources\Users\RelationManagers\LeaveQuotasRelationManager;
 
 class UserResource extends Resource
 {
@@ -35,7 +36,7 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            LeaveQuotasRelationManager::class,
         ];
     }
 

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash(where php:*)",
+      "Bash(/c/php/php.exe artisan:*)"
+    ]
+  }
+}

@@ -47,6 +47,13 @@ class UserForm
                     ->multiple()
                     ->preload()
                     ->searchable(),
+
+                // Input Kuota Cuti di bawah input Roles
+                TextInput::make('leave_quota')
+                    ->label('Kuota Cuti (Hari)')
+                    ->numeric()
+                    ->default(12) // Nilai bawaan jika tidak diisi
+                    ->required(),
             ]);
     }
 }

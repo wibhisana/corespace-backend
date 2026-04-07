@@ -50,4 +50,10 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Department::class);
     }
+
+    // Relasi ke LeaveQuota (Satu Karyawan bisa punya banyak LeaveQuota untuk tahun yang berbeda)
+    public function leaveQuotas()
+    {
+        return $this->hasMany(\App\Modules\HRIS\Models\LeaveQuota::class);
+    }
 }
