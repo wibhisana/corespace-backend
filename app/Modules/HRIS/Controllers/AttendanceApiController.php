@@ -4,6 +4,8 @@ namespace App\Modules\HRIS\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\HRIS\Models\Attendance;
+use App\Models\User; // Tambahan: Untuk memanggil data User
+use App\Notifications\AttendanceReminderNotification; // Tambahan: Memanggil Notifikasi
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -81,6 +83,32 @@ class AttendanceApiController extends Controller
         return response()->json([
             'message' => 'Clock Out berhasil!',
             'data' => $attendance
+        ]);
+    }
+
+    /**
+     * Trigger Notifikasi Pengingat Absensi
+     */
+    public function checkMissingAttendance()
+    {
+        $today = Carbon::today()->toDateString();
+
+        // 1. Ambil ID Karyawan yang SUDAH absen hari ini
+        $attendedUserIds = Attendance::where('date', $today)->pluck('user_id');
+
+        // 2. Cari Karyawan yang ID-nya TIDAK ADA di daftar $attendedUserIds
+        $usersMissing = User::whereNotIn('id', $attendedUserIds)->get();
+
+        $count = 0;
+        foreach ($usersMissing as $user) {
+            // 3. Kirim Notifikasi ke masing-masing karyawan (WA & Database)
+            $user->notify(new AttendanceReminderNotification());
+            $count++;
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Notifikasi pengingat belum absen berhasil dikirim ke {$count} karyawan."
         ]);
     }
 }

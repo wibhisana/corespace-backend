@@ -11,7 +11,6 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Forms\Components\TextInput;
-use Illuminate\Support\Facades\Hash;
 
 class UsersTable
 {
@@ -78,7 +77,7 @@ class UsersTable
                     ])
                     ->action(function (User $record, array $data) {
                         $record->update([
-                            'password' => Hash::make($data['new_password'])
+                            'password' => $data['new_password']
                         ]);
                     }),
 

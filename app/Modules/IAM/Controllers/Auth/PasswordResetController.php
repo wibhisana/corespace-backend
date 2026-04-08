@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Notifications\ResetPasswordNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 
@@ -55,7 +54,7 @@ class PasswordResetController extends Controller
 
         // Update Password
         $user = User::where('email', $request->email)->first();
-        $user->update(['password' => Hash::make($request->password)]);
+        $user->update(['password' => $request->password]);
 
         // Hapus token agar tidak bisa dipakai lagi
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();

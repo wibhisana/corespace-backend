@@ -6,7 +6,6 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Hash;
 
 class UserForm
 {
@@ -29,7 +28,7 @@ class UserForm
                 // Perbaikan Password agar aman (hashed) dan hanya wajib saat buat user baru
                 TextInput::make('password')
                     ->password()
-                    ->dehydrateStateUsing(fn ($state) => Hash::make($state))
+                    ->dehydrateStateUsing(fn ($state) => $state)
                     ->dehydrated(fn ($state) => filled($state))
                     ->required(fn (string $context): bool => $context === 'create')
                     ->maxLength(255),

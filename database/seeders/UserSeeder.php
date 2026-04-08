@@ -7,7 +7,6 @@ use App\Modules\HRIS\Models\Department;
 use App\Modules\HRIS\Models\EmployeeFinance;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
-use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
@@ -29,7 +28,7 @@ class UserSeeder extends Seeder
             ['email' => 'admin@corespace.com'],
             [
                 'name' => 'Ary Admin',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'department_id' => $itDept->id
             ]
         );
@@ -40,7 +39,7 @@ class UserSeeder extends Seeder
             ['email' => 'hr@corespace.com'],
             [
                 'name' => 'Siska HR',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'department_id' => $hrDept->id
             ]
         );
@@ -51,7 +50,7 @@ class UserSeeder extends Seeder
             ['email' => 'staff@corespace.com'],
             [
                 'name' => 'Budi Staff',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'department_id' => $itDept->id
             ]
         );
