@@ -37,15 +37,40 @@ class UnitForm
                                 $context === 'edit' ? 'Tipe Unit tidak dapat diubah setelah dibuat.' : null
                             ),
 
-                        // FITUR SAKTI: Multi-select yang langsung meng-update unit_id di tabel departments
+                    ]),
+
+                Section::make('Geofencing (Lokasi Absensi)')
+                    ->description('Koordinat GPS kantor untuk validasi Clock-in karyawan via mobile.')
+                    ->columns(3)
+                    ->schema([
+                        TextInput::make('latitude')
+                            ->label('Latitude')
+                            ->numeric()
+                            ->placeholder('-6.2088')
+                            ->helperText('Contoh: -6.2088 (Jakarta)'),
+
+                        TextInput::make('longitude')
+                            ->label('Longitude')
+                            ->numeric()
+                            ->placeholder('106.8456')
+                            ->helperText('Contoh: 106.8456 (Jakarta)'),
+
+                        TextInput::make('radius_meters')
+                            ->label('Radius (Meter)')
+                            ->numeric()
+                            ->default(50)
+                            ->helperText('Jarak maksimal karyawan boleh clock-in dari titik koordinat.'),
+                    ]),
+
+                Section::make('Departemen Terkait')
+                    ->schema([
                         Select::make('departments')
                             ->label('Departemen Terkait')
                             ->relationship('departments', 'name')
                             ->multiple()
                             ->searchable()
                             ->preload()
-                            ->columnSpanFull()
-                            ->helperText('Pilih departemen yang menjadi bagian dari unit ini. Catatan: Jika departemen sudah ada di unit lain, ia akan otomatis dipindahkan ke unit ini.'),
+                            ->helperText('Pilih departemen yang menjadi bagian dari unit ini.'),
                     ]),
             ]);
     }

@@ -7,9 +7,9 @@ use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PayrollsTable
 {
@@ -20,38 +20,66 @@ class PayrollsTable
                 TextColumn::make('user.name')
                     ->label('Karyawan')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->weight('bold'),
+
                 TextColumn::make('month')
-                    ->label('Bulan'),
+                    ->label('Bulan')
+                    ->sortable(),
+
                 TextColumn::make('year')
-                    ->label('Tahun'),
+                    ->label('Tahun')
+                    ->sortable(),
+
                 TextColumn::make('net_salary')
-                    ->label('Gaji Bersih')
+                    ->label('Take Home Pay')
                     ->money('IDR')
                     ->color('success')
                     ->weight('bold'),
-                IconColumn::make('is_paid')
-                    ->label('Status Rilis')
-                    ->boolean()
-                    ->trueIcon('heroicon-o-check-circle')
-                    ->falseIcon('heroicon-o-clock')
-                    ->color(fn (bool $state): string => $state ? 'success' : 'warning'),
+
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Paid' => 'success',
+                        'Approved' => 'info',
+                        'Draft' => 'gray',
+                        default => 'gray',
+                    }),
             ])
             ->recordActions([
-                // Aksi untuk HR melakukan rilis/pembayaran
+                // Cetak PDF Slip Gaji
+                Action::make('downloadPdf')
+                    ->label('Cetak PDF')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('danger')
+                    ->action(function (Payroll $record) {
+                        $record->load(['user.department', 'user.unit']);
+
+                        $pdf = Pdf::loadView('pdf.payslip', [
+                            'payroll' => $record,
+                            'user' => $record->user,
+                            'date' => now()->format('d F Y'),
+                        ]);
+
+                        return response()->streamDownload(
+                            fn () => print($pdf->output()),
+                            "Slip_Gaji_{$record->user->nik}_{$record->month}_{$record->year}.pdf"
+                        );
+                    }),
+
+                // Tandai Dibayar
                 Action::make('markAsPaid')
-                    ->label('Rilis Gaji')
-                    ->icon('heroicon-o-banknotes')
+                    ->label('Tandai Dibayar')
+                    ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->modalHeading('Konfirmasi Pembayaran')
-                    ->modalDescription('Tandai gaji ini sebagai sudah dibayar? Karyawan akan bisa melihat slip ini di aplikasi mereka.')
-                    ->action(fn (Payroll $record) => $record->update(['is_paid' => true]))
-                    ->visible(fn (Payroll $record) => !$record->is_paid),
+                    ->action(fn (Payroll $record) => $record->update(['status' => 'Paid', 'payment_date' => now()]))
+                    ->visible(fn (Payroll $record) => $record->status !== 'Paid'),
 
                 EditAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),

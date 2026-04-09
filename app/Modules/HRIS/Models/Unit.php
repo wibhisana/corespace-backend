@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Unit extends Model
 {
-    protected $fillable = ['name', 'type'];
+    protected $fillable = ['name', 'type', 'latitude', 'longitude', 'radius_meters'];
 
     /**
      * Relasi ke Departemen (Satu Unit punya banyak Departemen)

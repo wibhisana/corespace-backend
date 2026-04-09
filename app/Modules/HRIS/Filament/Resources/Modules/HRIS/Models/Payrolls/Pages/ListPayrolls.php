@@ -3,7 +3,12 @@
 namespace App\Modules\HRIS\Filament\Resources\Modules\HRIS\Models\Payrolls\Pages;
 
 use App\Modules\HRIS\Filament\Resources\Modules\HRIS\Models\Payrolls\PayrollResource;
+use App\Models\User;
+use App\Modules\HRIS\Models\Payroll;
+use App\Modules\HRIS\Models\Attendance;
+use App\Modules\HRIS\Models\OvertimeRequest;
 use Filament\Actions\Action;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -18,7 +23,7 @@ class ListPayrolls extends ListRecords
         return [
             Action::make('generatePayroll')
                 ->label('Generate Gaji Bulanan')
-                ->color('success')
+                ->color('primary')
                 ->icon('heroicon-o-cpu-chip')
                 ->form([
                     Select::make('month')
@@ -36,45 +41,72 @@ class ListPayrolls extends ListRecords
                         ->default(now()->year)
                         ->required(),
                 ])
-                // TAMBAHKAN BARIS INI UNTUK KEAMANAN
-                ->visible(fn () => auth()->user()->hasAnyRole(['HR Manager', 'Super Admin']))
                 ->action(function (array $data) {
-                    $users = \App\Models\User::all();
-                    $workDays = 22;
+                    $users = User::with('employeeFinance')->get();
                     $count = 0;
 
                     foreach ($users as $user) {
-                        $finance = $user->finance;
+                        $finance = $user->employeeFinance;
+                        // Jika tidak ada data gaji pokok, skip
                         if (!$finance || !$finance->basic_salary) continue;
 
-                        $presentDays = \App\Modules\HRIS\Models\Attendance::where('user_id', $user->id)
+                        $basic = $finance->basic_salary;
+
+                        // 1. Hitung Potongan Keterlambatan (Misal: Rp 1000 per menit terlambat)
+                        $totalLateMinutes = Attendance::where('user_id', $user->id)
                             ->whereMonth('date', $data['month'])
                             ->whereYear('date', $data['year'])
-                            ->count();
+                            ->sum('lateness_minutes');
 
-                        $basic = $finance->basic_salary;
-                        $deduction = ($basic / $workDays) * max(0, $workDays - $presentDays);
+                        $lateDeduction = $totalLateMinutes * 1000;
 
-                        \App\Modules\HRIS\Models\Payroll::updateOrCreate(
+                        $deductions = [];
+                        if ($lateDeduction > 0) {
+                            $deductions[] = ['name' => "Keterlambatan ($totalLateMinutes menit)", 'amount' => $lateDeduction];
+                        }
+
+                        // 2. Hitung Tunjangan Lembur (Misal: Rp 50000 per jam / dibagi 60 per menit)
+                        $totalOvertimeMinutes = OvertimeRequest::where('user_id', $user->id)
+                            ->whereMonth('date', $data['month'])
+                            ->whereYear('date', $data['year'])
+                            ->where('status', 'Approved')
+                            ->sum('duration_minutes');
+
+                        $overtimeAllowance = round($totalOvertimeMinutes * (50000 / 60));
+
+                        $allowances = [];
+                        if ($overtimeAllowance > 0) {
+                            $allowances[] = ['name' => "Lembur Approved ($totalOvertimeMinutes menit)", 'amount' => $overtimeAllowance];
+                        }
+
+                        $totalDedAmt = collect($deductions)->sum('amount');
+                        $totalAllAmt = collect($allowances)->sum('amount');
+
+                        $netSalary = $basic + $totalAllAmt - $totalDedAmt;
+
+                        Payroll::updateOrCreate(
                             ['user_id' => $user->id, 'month' => $data['month'], 'year' => $data['year']],
                             [
                                 'basic_salary' => $basic,
-                                'total_present' => $presentDays,
-                                'deduction' => $deduction,
-                                'net_salary' => $basic - $deduction,
-                                'is_paid' => false,
+                                'total_allowances' => $totalAllAmt,
+                                'total_deductions' => $totalDedAmt,
+                                'net_salary' => $netSalary,
+                                'allowance_details' => $allowances,
+                                'deduction_details' => $deductions,
+                                'status' => 'Draft',
                             ]
                         );
                         $count++;
                     }
 
                     Notification::make()
-                        ->title('Generate Selesai')
-                        ->body("$count data payroll telah dibuat sebagai DRAFT. Silakan rilis gaji agar dapat dilihat staff.")
+                        ->title('Payroll Generated!')
+                        ->body("$count data slip gaji bulan {$data['month']}/{$data['year']} telah dibuat dan dihitung otomatis.")
                         ->success()
-                        ->persistent() // Agar notifikasi tidak hilang sendiri (seperti pop-up)
                         ->send();
                 }),
+
+            CreateAction::make(),
         ];
     }
 }

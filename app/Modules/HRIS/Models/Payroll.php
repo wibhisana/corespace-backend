@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Payroll extends Model
 {
-    // 👇 Daftarkan kolom yang boleh diisi oleh sistem (Mass Assignment)
     protected $fillable = [
         'user_id',
         'month',
@@ -16,10 +15,22 @@ class Payroll extends Model
         'total_present',
         'deduction',
         'net_salary',
+        'allowance_details',
+        'deduction_details',
+        'total_allowances',
+        'total_deductions',
+        'status',
+        'payment_date',
         'is_paid',
     ];
 
-    // 👇 Relasi ke Karyawan (User)
+    protected $casts = [
+        'allowance_details' => 'array',
+        'deduction_details' => 'array',
+        'payment_date' => 'date',
+        'is_paid' => 'boolean',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

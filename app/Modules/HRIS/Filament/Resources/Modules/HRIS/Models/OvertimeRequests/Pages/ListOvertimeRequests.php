@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Modules\HRIS\Filament\Resources\Modules\HRIS\Models\OvertimeRequests\Pages;
+
+use App\Modules\HRIS\Filament\Resources\Modules\HRIS\Models\OvertimeRequests\OvertimeRequestResource;
+use Filament\Actions\CreateAction;
+use Filament\Resources\Pages\ListRecords;
+
+class ListOvertimeRequests extends ListRecords
+{
+    protected static string $resource = OvertimeRequestResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            CreateAction::make(),
+        ];
+    }
+}

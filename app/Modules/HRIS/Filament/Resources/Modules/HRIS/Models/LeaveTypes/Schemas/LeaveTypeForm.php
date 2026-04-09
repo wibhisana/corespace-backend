@@ -5,7 +5,7 @@ namespace App\Modules\HRIS\Filament\Resources\Modules\HRIS\Models\LeaveTypes\Sch
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
-use Filament\Forms\Get;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class LeaveTypeForm

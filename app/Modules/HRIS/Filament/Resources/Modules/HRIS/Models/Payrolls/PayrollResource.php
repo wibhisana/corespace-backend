@@ -11,14 +11,18 @@ use App\Modules\HRIS\Filament\Resources\Modules\HRIS\Models\Payrolls\Tables\Payr
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class PayrollResource extends Resource
 {
     protected static ?string $model = Payroll::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
+
+    protected static ?string $navigationLabel = 'Penggajian / Payroll';
+    protected static ?string $modelLabel = 'Data Gaji';
+    protected static string | UnitEnum | null $navigationGroup = 'Manajemen Finansial';
 
     public static function form(Schema $schema): Schema
     {
@@ -30,17 +34,9 @@ class PayrollResource extends Resource
         return PayrollsTable::configure($table);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
     public static function canViewAny(): bool
     {
-        // Hanya HR dan Admin yang bisa melihat menu Payroll di sidebar
-        return auth()->user()->hasAnyRole(['HR Manager', 'Super Admin']);
+        return auth()->user()?->hasAnyRole(['HR Manager', 'Super Admin']) ?? true;
     }
 
     public static function getPages(): array
