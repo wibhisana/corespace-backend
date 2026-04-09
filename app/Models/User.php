@@ -11,6 +11,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use App\Modules\HRIS\Models\Department;
+use App\Modules\HRIS\Models\AttendanceGroup;
+use App\Modules\HRIS\Models\Unit;
 use Laravel\Sanctum\HasApiTokens;
 
 // #[Fillable(['name', 'email', 'password'])]
@@ -21,10 +23,32 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     protected $fillable = [
+        // Data HR (Kategori 1)
         'name',
         'email',
         'password',
-        'department_id', // <-- Daftarkan kolom baru
+        'nik',
+        'unit_id',
+        'department_id',
+        'attendance_group_id',
+        'job_title',
+        'join_date',
+        'employment_status',
+
+        // Data Karyawan / ESS (Kategori 2)
+        'phone_number',
+        'personal_email',
+        'current_address',
+        'gender',
+        'birth_place',
+        'birth_date',
+        'marital_status',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'id_card_number',
+        'id_card_path',
+        'tax_id',
+        'tax_id_path',
     ];
 
     protected $hidden = [
@@ -42,13 +66,36 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'join_date' => 'date',
+            'birth_date' => 'date',
         ];
     }
 
+    /**
+     * Cek apakah karyawan sudah melengkapi profil ESS-nya.
+     */
+    public function isProfileComplete(): bool
+    {
+        return !empty($this->phone_number)
+            && !empty($this->id_card_number)
+            && $this->employeeFinance
+            && !empty($this->employeeFinance->account_number);
+    }
+
     // Relasi ke Modul HRIS
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function employeeFinance()
+    {
+        return $this->hasOne(\App\Modules\HRIS\Models\EmployeeFinance::class);
     }
 
     // Relasi ke Attendance
@@ -61,5 +108,16 @@ class User extends Authenticatable
     public function leaveQuotas()
     {
         return $this->hasMany(\App\Modules\HRIS\Models\LeaveQuota::class);
+    }
+
+    public function attendanceGroup()
+    {
+        return $this->belongsTo(AttendanceGroup::class);
+    }
+
+    public function leaveBalances()
+    {
+        // Panggil namespace yang tepat karena model ada di dalam modul HRIS
+        return $this->hasMany(\App\Modules\HRIS\Models\LeaveBalance::class);
     }
 }

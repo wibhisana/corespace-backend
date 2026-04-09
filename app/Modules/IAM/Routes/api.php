@@ -1,14 +1,18 @@
 <?php
 
 use App\Modules\IAM\Controllers\AuthController;
+use App\Modules\IAM\Controllers\UserManagementController;
+use App\Modules\IAM\Controllers\ProfileController;
 use App\Modules\HRIS\Controllers\AttendanceApiController;
 use App\Modules\HRIS\Controllers\LeaveRequestApiController;
 use App\Modules\HRIS\Controllers\PayrollApiController;
 use App\Modules\IAM\Controllers\Auth\PasswordResetController;
 use App\Modules\HRIS\Controllers\WhatsAppBotController;
+use App\Http\Controllers\Api\RoomBookingController;
+
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
-use Carbon\Carbon; // <-- TAMBAHAN: Wajib ada karena kita pakai Carbon di rute /me
+use Carbon\Carbon;
 
 // ==========================================
 // RUTE PUBLIK (Tidak Perlu Token)
@@ -34,14 +38,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Endpoint Profil Karyawan
     Route::get('/me', function (Request $request) {
-        // Load relasi department & roles
-        $user = $request->user()->load('department', 'roles');
+        $user = $request->user()->load('department', 'roles', 'employeeFinance');
 
         // Cek status absen hari ini
         $hasClockedIn = $user->attendances()->where('date', Carbon::today()->toDateString())->exists();
 
         return response()->json([
             'user' => $user,
+            'is_profile_complete' => $user->isProfileComplete(),
             'attendance_status' => [
                 'has_clocked_in' => $hasClockedIn,
                 'reminder_message' => $hasClockedIn ? null : "Anda belum melakukan absensi hari ini."
@@ -49,6 +53,9 @@ Route::middleware('auth:sanctum')->group(function () {
             'unread_notifications' => $user->unreadNotifications
         ]);
     });
+
+    // Endpoint ESS: Karyawan lengkapi/update profil sendiri
+    Route::put('/profile', [ProfileController::class, 'update']);
 
     // Rute Absensi
     Route::post('/attendances/clock-in', [AttendanceApiController::class, 'clockIn']);
@@ -62,7 +69,42 @@ Route::middleware('auth:sanctum')->group(function () {
     // Rute Slip Gaji
     Route::get('/payrolls', [PayrollApiController::class, 'index']);
 
+    // ==========================================
+    // 🏢 RUTE MEETING ROOM BOOKING (Karyawan)
+    // ==========================================
+    // Mendapatkan daftar ruangan (Hanya ruangan yang aktif)
+    Route::get('/meeting-rooms', function() {
+        return response()->json([
+            'data' => \App\Models\MeetingRoom::with('location')->where('is_active', true)->get()
+        ]);
+    });
+
+    // Rute untuk Submit Booking (Cek bentrok ada di controller ini)
+    Route::post('/room-bookings', [RoomBookingController::class, 'store']);
+
+    // Rute untuk melihat riwayat booking milik user yang sedang login
+    Route::get('/room-bookings/history', function(Request $request) {
+        $bookings = \App\Models\RoomBooking::with(['meetingRoom.location'])
+            ->where('user_id', $request->user()->id)
+            ->orderBy('start_time', 'desc')
+            ->get();
+
+        return response()->json(['data' => $bookings]);
+    });
+
     // Rute Manajemen Log
     Route::get('/logs/auth', [\App\Modules\IAM\Controllers\LogApiController::class, 'index']);
     Route::delete('/logs/auth/clear', [\App\Modules\IAM\Controllers\LogApiController::class, 'clearLogs']);
+
+    // ==========================================
+    // RUTE USER MANAGEMENT (Admin / Super Admin)
+    // ==========================================
+    Route::middleware('role:Super Admin|Admin')->group(function () {
+        Route::get('/users', [UserManagementController::class, 'index']);
+        Route::post('/users', [UserManagementController::class, 'store']);
+        Route::post('/users/import', [UserManagementController::class, 'import']);
+        Route::get('/users/{user}', [UserManagementController::class, 'show']);
+        Route::put('/users/{user}', [UserManagementController::class, 'update']);
+        Route::delete('/users/{user}', [UserManagementController::class, 'destroy']);
+    });
 });

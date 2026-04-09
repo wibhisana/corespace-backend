@@ -4,7 +4,10 @@
       "Bash(php artisan:*)",
       "Bash(where php:*)",
       "Bash(/c/php/php.exe artisan:*)",
-      "Bash(/c/php/php artisan:*)"
+      "Bash(/c/php/php artisan:*)",
+      "Bash(composer require:*)",
+      "Bash(/c/php/php -r ':*)",
+      "Bash(ls d:/development/Laravel/corespace-backend/vendor/blade-ui-kit/blade-heroicons/resources/svg/o-*)"
     ]
   }
 }

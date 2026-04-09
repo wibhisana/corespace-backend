@@ -60,6 +60,13 @@ return [
             'report' => false,
         ],
 
+        'employee_private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/employees'),
+            'visibility' => 'private',
+            'throw' => false,
+        ],
+
     ],
 
     /*

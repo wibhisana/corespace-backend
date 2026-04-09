@@ -9,6 +9,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Forms\Components\TextInput;
 
@@ -18,49 +19,87 @@ class UsersTable
     {
         return $table
             ->columns([
+                TextColumn::make('nik')
+                    ->label('NIK')
+                    ->searchable()
+                    ->sortable(),
+
                 TextColumn::make('name')
-                    ->searchable(),
+                    ->label('Nama')
+                    ->searchable()
+                    ->sortable(),
 
                 TextColumn::make('email')
-                    ->label('Email address')
+                    ->label('Email Kantor')
                     ->searchable(),
 
                 TextColumn::make('department.name')
-                    ->label('Department')
+                    ->label('Departemen')
                     ->sortable()
                     ->searchable(),
 
+                TextColumn::make('job_title')
+                    ->label('Jabatan')
+                    ->searchable()
+                    ->toggleable(),
+
                 TextColumn::make('roles.name')
-                    ->label('Roles')
+                    ->label('Role')
                     ->badge(),
 
-                // Menampilkan sisa kuota cuti di tabel
+                TextColumn::make('employment_status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Tetap' => 'success',
+                        'Kontrak' => 'warning',
+                        'Probation' => 'info',
+                        default => 'gray',
+                    }),
+
+                TextColumn::make('join_date')
+                    ->label('Tgl. Bergabung')
+                    ->date('d M Y')
+                    ->sortable()
+                    ->toggleable(),
+
                 TextColumn::make('leave_quota')
                     ->label('Sisa Cuti')
                     ->numeric()
-                    ->sortable(),
-
-                TextColumn::make('email_verified_at')
-                    ->dateTime()
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('phone_number')
+                    ->label('Telepon')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('department_id')
+                    ->relationship('department', 'name')
+                    ->label('Departemen')
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('employment_status')
+                    ->label('Status Kepegawaian')
+                    ->options([
+                        'Tetap' => 'Tetap',
+                        'Kontrak' => 'Kontrak',
+                        'Probation' => 'Probation',
+                    ]),
+
+                SelectFilter::make('roles')
+                    ->relationship('roles', 'name')
+                    ->label('Role')
+                    ->searchable()
+                    ->preload(),
             ])
-            // UBAH menjadi actions()
             ->actions([
-                // Reset Password Baru (Warna Kuning + Ikon Kunci)
                 Action::make('resetPassword')
                     ->label('Reset Password')
                     ->icon('heroicon-o-key')
@@ -81,11 +120,9 @@ class UsersTable
                         ]);
                     }),
 
-                // Tombol Edit & Delete standar
                 EditAction::make(),
                 DeleteAction::make(),
             ])
-            // UBAH menjadi bulkActions()
             ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

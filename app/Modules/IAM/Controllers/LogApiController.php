@@ -10,6 +10,14 @@ class LogApiController extends Controller
 {
     public function index(Request $request)
     {
+
+        // PROTEKSI KHUSUS ADMIN
+        if (!$request->user()->hasAnyRole(['Super Admin', 'Admin'])) {
+            return response()->json([
+                'message' => 'Akses Ditolak. Halaman ini khusus Administrator.'
+            ], 403); // 403 berarti Forbidden
+        }
+
         $query = AuthLog::query();
 
         // 1. Fitur Filter Berdasarkan Status (SUCCESS / FAILED)
@@ -38,6 +46,11 @@ class LogApiController extends Controller
 
     public function clearLogs(Request $request)
     {
+        // PROTEKSI KHUSUS ADMIN (Bahkan mungkin hanya Super Admin)
+        if (!$request->user()->hasRole('Super Admin')) {
+             return response()->json(['message' => 'Hanya Super Admin yang dapat menghapus log.'], 403);
+        }
+
         // Fitur untuk tombol "Clear log messages" di gambar Anda
         // (Biasanya hanya boleh diakses Super Admin)
         AuthLog::truncate();

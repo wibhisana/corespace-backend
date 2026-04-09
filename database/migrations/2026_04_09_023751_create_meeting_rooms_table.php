@@ -1,0 +1,33 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('meeting_rooms', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('location_id')->constrained('locations')->cascadeOnDelete();
+            $table->string('name'); // Contoh: Ruang Jayakarta
+            $table->integer('capacity')->default(0);
+            $table->json('equipment')->nullable(); // Disimpan sebagai JSON array
+            $table->boolean('is_active')->default(true);
+            $table->boolean('requires_approval')->default(false);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('meeting_rooms');
+    }
+};
