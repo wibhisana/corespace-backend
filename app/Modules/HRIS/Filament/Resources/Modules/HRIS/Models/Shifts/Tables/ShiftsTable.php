@@ -31,12 +31,12 @@ class ShiftsTable
                 TextColumn::make('start_time')
                     ->label('Jam Masuk')
                     ->time('H:i')
-                    ->default('-'),
+                    ->placeholder('-'),
 
                 TextColumn::make('end_time')
                     ->label('Jam Pulang')
                     ->time('H:i')
-                    ->default('-'),
+                    ->placeholder('-'),
 
                 TextColumn::make('grace_period')
                     ->label('Toleransi')

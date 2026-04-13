@@ -8,7 +8,8 @@
       "Bash(composer require:*)",
       "Bash(/c/php/php -r ':*)",
       "Bash(ls d:/development/Laravel/corespace-backend/vendor/blade-ui-kit/blade-heroicons/resources/svg/o-*)",
-      "Bash(grep -A 30 'protected $fillable' d:/development/Laravel/corespace-backend/app/Modules/HRIS/Models/Payroll.php)"
+      "Bash(grep -A 30 'protected $fillable' d:/development/Laravel/corespace-backend/app/Modules/HRIS/Models/Payroll.php)",
+      "Bash(composer show:*)"
     ]
   }
 }

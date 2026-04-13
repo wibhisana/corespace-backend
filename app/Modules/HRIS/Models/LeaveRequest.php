@@ -7,19 +7,30 @@ use Illuminate\Database\Eloquent\Model;
 
 class LeaveRequest extends Model
 {
-    // Daftarkan kolom yang boleh diisi oleh sistem
     protected $fillable = [
         'user_id',
+        'leave_type_id',
         'leave_type',
         'start_date',
         'end_date',
+        'total_days',
         'reason',
-        'status'
+        'attachment_path',
+        'status',
     ];
 
-    // Relasi ke Karyawan yang mengajukan cuti
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function leaveType()
+    {
+        return $this->belongsTo(LeaveType::class);
     }
 }

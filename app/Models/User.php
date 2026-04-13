@@ -13,14 +13,25 @@ use Spatie\Permission\Traits\HasRoles;
 use App\Modules\HRIS\Models\Department;
 use App\Modules\HRIS\Models\AttendanceGroup;
 use App\Modules\HRIS\Models\Unit;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Laravel\Sanctum\HasApiTokens;
 
 // #[Fillable(['name', 'email', 'password'])]
 // #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
+
+    /**
+     * Tentukan siapa yang boleh login ke Filament panel.
+     * Hanya user dengan minimal 1 role yang boleh masuk.
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->roles()->exists();
+    }
 
     protected $fillable = [
         // Data HR (Kategori 1)
@@ -30,6 +41,7 @@ class User extends Authenticatable
         'nik',
         'unit_id',
         'department_id',
+        'manager_id',
         'attendance_group_id',
         'job_title',
         'join_date',
@@ -91,6 +103,22 @@ class User extends Authenticatable
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * Atasan langsung karyawan ini.
+     */
+    public function manager()
+    {
+        return $this->belongsTo(User::class, 'manager_id');
+    }
+
+    /**
+     * Bawahan langsung karyawan ini.
+     */
+    public function subordinates()
+    {
+        return $this->hasMany(User::class, 'manager_id');
     }
 
     public function employeeFinance()

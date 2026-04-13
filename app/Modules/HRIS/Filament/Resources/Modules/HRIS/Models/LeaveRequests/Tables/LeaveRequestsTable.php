@@ -87,7 +87,10 @@ class LeaveRequestsTable
                         // 4. Update status cuti jadi approved
                         $record->update(['status' => 'approved']);
                     })
-                    ->visible(fn (LeaveRequest $record) => $record->status === 'pending'),
+                    ->visible(fn (LeaveRequest $record): bool =>
+                        $record->status === 'pending'
+                        && auth()->user()?->can('approve', $record)
+                    ),
 
                 // Tombol Reject
                 Action::make('reject')
@@ -95,8 +98,13 @@ class LeaveRequestsTable
                     ->color('danger')
                     ->icon('heroicon-o-x-circle')
                     ->requiresConfirmation()
+                    ->modalHeading('Tolak Pengajuan Cuti')
+                    ->modalDescription('Anda yakin menolak pengajuan cuti ini? Tindakan ini tidak bisa dibatalkan.')
                     ->action(fn (LeaveRequest $record) => $record->update(['status' => 'rejected']))
-                    ->visible(fn (LeaveRequest $record) => $record->status === 'pending'),
+                    ->visible(fn (LeaveRequest $record): bool =>
+                        $record->status === 'pending'
+                        && auth()->user()?->can('reject', $record)
+                    ),
 
                 EditAction::make(),
             ])

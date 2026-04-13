@@ -14,6 +14,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Auto-generate Shield permissions sebelum seed roles
+        \Illuminate\Support\Facades\Artisan::call('shield:generate', [
+            '--all' => true,
+            '--panel' => 'admin',
+            '--option' => 'policies_and_permissions',
+            '--no-interaction' => true,
+        ]);
+
         $this->call([
             // 1. Fondasi hak akses (Role & Permission)
             PermissionSeeder::class,
@@ -35,6 +43,9 @@ class DatabaseSeeder extends Seeder
 
             // 7. Sample pengajuan lembur
             OvertimeSeeder::class,
+
+            // 8. Shield Roles & Permissions (jalankan SETELAH `shield:generate`)
+            ShieldSeeder::class,
         ]);
     }
 }

@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class LeaveRequestResource extends Resource
 {
@@ -48,9 +49,30 @@ class LeaveRequestResource extends Resource
         ];
     }
 
-    public static function canViewAny(): bool
+    /**
+     * Data Isolation Multi-Tier:
+     * - Super Admin & HR Manager: lihat semua leave request
+     * - Manager: lihat miliknya sendiri + leave bawahan langsungnya
+     * - Staff: hanya lihat miliknya sendiri
+     */
+    public static function getEloquentQuery(): Builder
     {
-        // Tambahkan tanda tanya (?->) dan (?? false) agar tidak crash jika user null
-        return auth()->user()?->hasAnyRole(['Super Admin', 'HR Manager']) ?? false;
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if (! $user) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        // Global access untuk Super Admin & HR Manager
+        if ($user->hasAnyRole(['super_admin', 'hr_manager'])) {
+            return $query;
+        }
+
+        // Manager scope: own + subordinates' requests
+        return $query->where(function (Builder $q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->orWhereHas('user', fn (Builder $sub) => $sub->where('manager_id', $user->id));
+        });
     }
 }

@@ -63,6 +63,19 @@ class UserForm
                             ->preload()
                             ->required(),
 
+                        Select::make('manager_id')
+                            ->label('Atasan Langsung')
+                            ->relationship(
+                                name: 'manager',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: fn ($query) => $query->whereKeyNot(request()->route('record')),
+                            )
+                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->name} ({$record->job_title})")
+                            ->searchable(['name', 'email', 'nik'])
+                            ->preload()
+                            ->nullable()
+                            ->helperText('Manager yang akan meng-approve cuti & lembur karyawan ini.'),
+
                         // 💡 PENAMBAHAN GRUP KEHADIRAN DI SINI
                         Select::make('attendance_group_id')
                             ->label('Grup Kehadiran (Sif)')
