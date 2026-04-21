@@ -31,21 +31,21 @@ class AttendanceApiController extends Controller
     {
         $user = $request->user();
         $today = Carbon::today()->toDateString();
-        $now = Carbon::now()->toTimeString();
+        $now = Carbon::now();
 
-        // Cek apakah sudah absen masuk hari ini
-        $attendance = Attendance::where('user_id', $user->id)
+        $existingIn = Attendance::where('user_id', $user->id)
                                 ->where('date', $today)
-                                ->first();
+                                ->where('type', 'in')
+                                ->exists();
 
-        if ($attendance) {
+        if ($existingIn) {
             return response()->json(['message' => 'Anda sudah melakukan Clock In hari ini.'], 400);
         }
 
-        // Catat absen masuk
         $newAttendance = Attendance::create([
             'user_id' => $user->id,
             'date' => $today,
+            'type' => 'in',
             'clock_in' => $now,
             'notes' => $request->notes,
         ]);
@@ -60,30 +60,38 @@ class AttendanceApiController extends Controller
     {
         $user = $request->user();
         $today = Carbon::today()->toDateString();
-        $now = Carbon::now()->toTimeString();
+        $now = Carbon::now();
 
-        // Cari data absen hari ini
-        $attendance = Attendance::where('user_id', $user->id)
-                                ->where('date', $today)
-                                ->first();
+        $hasClockedIn = Attendance::where('user_id', $user->id)
+                                  ->where('date', $today)
+                                  ->where('type', 'in')
+                                  ->exists();
 
-        if (!$attendance) {
+        if (!$hasClockedIn) {
             return response()->json(['message' => 'Anda belum melakukan Clock In hari ini.'], 400);
         }
 
-        if ($attendance->clock_out) {
+        $existingOut = Attendance::where('user_id', $user->id)
+                                 ->where('date', $today)
+                                 ->where('type', 'out')
+                                 ->exists();
+
+        if ($existingOut) {
             return response()->json(['message' => 'Anda sudah melakukan Clock Out hari ini.'], 400);
         }
 
-        // Update waktu pulang
-        $attendance->update([
-            'clock_out' => $now
+        $newAttendance = Attendance::create([
+            'user_id' => $user->id,
+            'date' => $today,
+            'type' => 'out',
+            'clock_out' => $now,
+            'notes' => $request->notes,
         ]);
 
         return response()->json([
             'message' => 'Clock Out berhasil!',
-            'data' => $attendance
-        ]);
+            'data' => $newAttendance
+        ], 201);
     }
 
     /**
@@ -93,8 +101,10 @@ class AttendanceApiController extends Controller
     {
         $today = Carbon::today()->toDateString();
 
-        // 1. Ambil ID Karyawan yang SUDAH absen hari ini
-        $attendedUserIds = Attendance::where('date', $today)->pluck('user_id');
+        // 1. Ambil ID Karyawan yang SUDAH Clock In hari ini
+        $attendedUserIds = Attendance::where('date', $today)
+                                     ->where('type', 'in')
+                                     ->pluck('user_id');
 
         // 2. Cari Karyawan yang ID-nya TIDAK ADA di daftar $attendedUserIds
         $usersMissing = User::whereNotIn('id', $attendedUserIds)->get();

@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'proxycheck' => [
+        'key' => env('PROXYCHECK_API_KEY'),
+    ],
+
 ];

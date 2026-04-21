@@ -18,7 +18,12 @@ class Attendance extends Model
         'status',
         'clock_in_location',
         'clock_out_location',
-        'notes'
+        'notes',
+        // Kolom geofencing API Mobile
+        'type',
+        'latitude',
+        'longitude',
+        'photo_path',
     ];
 
     // Mengubah format string dari database menjadi objek Carbon (DateTime)
@@ -26,6 +31,8 @@ class Attendance extends Model
         'date' => 'date',
         'clock_in' => 'datetime',
         'clock_out' => 'datetime',
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
     ];
 
     public function user()

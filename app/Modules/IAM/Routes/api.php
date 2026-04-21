@@ -40,8 +40,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', function (Request $request) {
         $user = $request->user()->load('department', 'roles', 'employeeFinance');
 
-        // Cek status absen hari ini
-        $hasClockedIn = $user->attendances()->where('date', Carbon::today()->toDateString())->exists();
+        // Cek status absen hari ini (event-log: hanya baris type='in' yang dihitung sebagai Clock In)
+        $hasClockedIn = $user->attendances()
+            ->where('date', Carbon::today()->toDateString())
+            ->where('type', 'in')
+            ->exists();
 
         return response()->json([
             'user' => $user,
@@ -58,8 +61,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/profile', [ProfileController::class, 'update']);
 
     // Rute Absensi
-    Route::post('/attendances/clock-in', [AttendanceApiController::class, 'clockIn']);
-    Route::post('/attendances/clock-out', [AttendanceApiController::class, 'clockOut']);
+    Route::post('/attendances/clock-in', [AttendanceApiController::class, 'clockIn'])
+        ->middleware('block.vpn');
+    Route::post('/attendances/clock-out', [AttendanceApiController::class, 'clockOut'])
+        ->middleware('block.vpn');
     Route::get('/attendances/history', [AttendanceApiController::class, 'index']);
 
     // Rute Cuti
@@ -70,7 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payrolls', [PayrollApiController::class, 'index']);
 
     // ==========================================
-    // 🏢 RUTE MEETING ROOM BOOKING (Karyawan)
+    // RUTE MEETING ROOM BOOKING (Karyawan)
     // ==========================================
     // Mendapatkan daftar ruangan (Hanya ruangan yang aktif)
     Route::get('/meeting-rooms', function() {

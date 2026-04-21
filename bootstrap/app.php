@@ -27,7 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'block.vpn' => \App\Http\Middleware\BlockVpnAccess::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
