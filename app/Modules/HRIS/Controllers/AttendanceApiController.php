@@ -1,12 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\HRIS\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\HRIS\Models\Attendance;
-use App\Models\User; // Tambahan: Untuk memanggil data User
-use App\Notifications\AttendanceReminderNotification; // Tambahan: Memanggil Notifikasi
+use App\Models\User;
+use App\Notifications\AttendanceReminderNotification;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class AttendanceApiController extends Controller
@@ -27,11 +34,17 @@ class AttendanceApiController extends Controller
         ]);
     }
 
-    public function clockIn(Request $request)
+    public function clockIn(Request $request): JsonResponse
     {
-        $user = $request->user();
-        $today = Carbon::today()->toDateString();
-        $now = Carbon::now();
+        $request->validate([
+            'photo'     => ['required', 'image', 'max:5120'],
+            'latitude'  => ['nullable', 'numeric'],
+            'longitude' => ['nullable', 'numeric'],
+        ]);
+
+        $user   = $request->user();
+        $today  = Carbon::today()->toDateString();
+        $now    = Carbon::now();
 
         $existingIn = Attendance::where('user_id', $user->id)
                                 ->where('date', $today)
@@ -42,32 +55,65 @@ class AttendanceApiController extends Controller
             return response()->json(['message' => 'Anda sudah melakukan Clock In hari ini.'], 400);
         }
 
+        if (empty($user->face_photo_path) || ! Storage::disk('public')->exists($user->face_photo_path)) {
+            return response()->json([
+                'message' => 'Foto referensi wajah Anda belum terdaftar di sistem. Hubungi HRD.'
+            ], 400);
+        }
+
+        $verification = $this->verifyFaceWithAI($user->face_photo_path, $request->file('photo'));
+
+        if ($verification['status'] === 'service_down') {
+            return response()->json([
+                'message' => 'Layanan AI sedang sibuk/offline. Silakan coba lagi nanti.'
+            ], 500);
+        }
+
+        if ($verification['status'] !== 'matched') {
+            return response()->json([
+                'message' => "Verifikasi wajah gagal: {$verification['message']}. Silakan coba lagi."
+            ], 400);
+        }
+
+        // Geofencing check tetap di sini (setelah verifikasi wajah, sebelum create row).
+
+        $selfiePath = $request->file('photo')->store('attendances/selfies', 'public');
+
         $newAttendance = Attendance::create([
-            'user_id' => $user->id,
-            'date' => $today,
-            'type' => 'in',
-            'clock_in' => $now,
-            'notes' => $request->notes,
+            'user_id'    => $user->id,
+            'date'       => $today,
+            'type'       => 'in',
+            'clock_in'   => $now,
+            'latitude'   => $request->input('latitude'),
+            'longitude'  => $request->input('longitude'),
+            'photo_path' => $selfiePath,
+            'notes'      => $request->input('notes'),
         ]);
 
         return response()->json([
             'message' => 'Clock In berhasil!',
-            'data' => $newAttendance
+            'data'    => $newAttendance,
         ], 201);
     }
 
-    public function clockOut(Request $request)
+    public function clockOut(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $request->validate([
+            'photo'     => ['required', 'image', 'max:5120'],
+            'latitude'  => ['nullable', 'numeric'],
+            'longitude' => ['nullable', 'numeric'],
+        ]);
+
+        $user  = $request->user();
         $today = Carbon::today()->toDateString();
-        $now = Carbon::now();
+        $now   = Carbon::now();
 
         $hasClockedIn = Attendance::where('user_id', $user->id)
                                   ->where('date', $today)
                                   ->where('type', 'in')
                                   ->exists();
 
-        if (!$hasClockedIn) {
+        if (! $hasClockedIn) {
             return response()->json(['message' => 'Anda belum melakukan Clock In hari ini.'], 400);
         }
 
@@ -80,18 +126,86 @@ class AttendanceApiController extends Controller
             return response()->json(['message' => 'Anda sudah melakukan Clock Out hari ini.'], 400);
         }
 
+        if (empty($user->face_photo_path) || ! Storage::disk('public')->exists($user->face_photo_path)) {
+            return response()->json([
+                'message' => 'Foto referensi wajah Anda belum terdaftar di sistem. Hubungi HRD.'
+            ], 400);
+        }
+
+        $verification = $this->verifyFaceWithAI($user->face_photo_path, $request->file('photo'));
+
+        if ($verification['status'] === 'service_down') {
+            return response()->json([
+                'message' => 'Layanan AI sedang sibuk/offline. Silakan coba lagi nanti.'
+            ], 500);
+        }
+
+        if ($verification['status'] !== 'matched') {
+            return response()->json([
+                'message' => "Verifikasi wajah gagal: {$verification['message']}. Silakan coba lagi."
+            ], 400);
+        }
+
+        // Geofencing check tetap di sini (setelah verifikasi wajah, sebelum create row).
+
+        $selfiePath = $request->file('photo')->store('attendances/selfies', 'public');
+
         $newAttendance = Attendance::create([
-            'user_id' => $user->id,
-            'date' => $today,
-            'type' => 'out',
-            'clock_out' => $now,
-            'notes' => $request->notes,
+            'user_id'    => $user->id,
+            'date'       => $today,
+            'type'       => 'out',
+            'clock_out'  => $now,
+            'latitude'   => $request->input('latitude'),
+            'longitude'  => $request->input('longitude'),
+            'photo_path' => $selfiePath,
+            'notes'      => $request->input('notes'),
         ]);
 
         return response()->json([
             'message' => 'Clock Out berhasil!',
-            'data' => $newAttendance
+            'data'    => $newAttendance,
         ], 201);
+    }
+
+    private function verifyFaceWithAI(string $referencePhotoPath, UploadedFile $selfieFile): array
+    {
+        $endpoint = (string) config(
+            'services.face_ai.url',
+            'http://localhost:5000/api/v1/verify-face'
+        );
+
+        try {
+            $response = Http::timeout(15)
+                ->connectTimeout(5)
+                ->attach(
+                    'reference_image',
+                    Storage::disk('public')->get($referencePhotoPath),
+                    basename($referencePhotoPath)
+                )
+                ->attach(
+                    'selfie_image',
+                    file_get_contents($selfieFile->getRealPath()),
+                    $selfieFile->getClientOriginalName() ?: 'selfie.jpg'
+                )
+                ->post($endpoint);
+        } catch (ConnectionException $e) {
+            return ['status' => 'service_down', 'message' => $e->getMessage()];
+        } catch (\Throwable $e) {
+            return ['status' => 'service_down', 'message' => $e->getMessage()];
+        }
+
+        if (! $response->successful()) {
+            return ['status' => 'service_down', 'message' => "HTTP {$response->status()}"];
+        }
+
+        $json    = (array) $response->json();
+        $matched = (($json['status'] ?? null) !== 'error')
+            && (($json['match'] ?? false) === true);
+
+        return [
+            'status'  => $matched ? 'matched' : 'mismatch',
+            'message' => (string) ($json['message'] ?? ($matched ? 'Wajah cocok.' : 'Wajah tidak sesuai.')),
+        ];
     }
 
     /**

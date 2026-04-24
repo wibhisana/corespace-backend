@@ -4,7 +4,7 @@ namespace App\Modules\IAM\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\AuthLog; // <-- Panggil model CCTV-nya
+use App\Modules\IAM\Models\AuthLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;

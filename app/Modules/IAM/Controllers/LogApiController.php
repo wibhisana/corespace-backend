@@ -3,7 +3,7 @@
 namespace App\Modules\IAM\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\AuthLog;
+use App\Modules\IAM\Models\AuthLog;
 use Illuminate\Http\Request;
 
 class LogApiController extends Controller

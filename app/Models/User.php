@@ -42,6 +42,7 @@ class User extends Authenticatable implements FilamentUser
         'unit_id',
         'department_id',
         'manager_id',
+        'face_photo_path',
         'attendance_group_id',
         'job_title',
         'join_date',
@@ -61,6 +62,24 @@ class User extends Authenticatable implements FilamentUser
         'id_card_path',
         'tax_id',
         'tax_id_path',
+
+        // Data Hasil Ekstraksi AI KTP (Kategori 3)
+        'ktp_image_path',
+        'nik_ktp',
+        'ktp_nama',
+        'ktp_tempat_tgl_lahir',
+        'ktp_jenis_kelamin',
+        'ktp_alamat',
+        'ktp_rt_rw',
+        'ktp_kel_desa',
+        'ktp_kecamatan',
+        'ktp_agama',
+        'ktp_status_perkawinan',
+        'ktp_pekerjaan',
+        'ktp_kewarganegaraan',
+        'ktp_berlaku_hingga',
+        'is_ktp_verified_by_ai',
+        'ai_completeness_score',
     ];
 
     protected $hidden = [
@@ -80,6 +99,10 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'join_date' => 'date',
             'birth_date' => 'date',
+
+            // Casts untuk Meta Data AI
+            'is_ktp_verified_by_ai' => 'boolean',
+            'ai_completeness_score' => 'decimal:2',
         ];
     }
 

@@ -39,4 +39,8 @@ return [
         'key' => env('PROXYCHECK_API_KEY'),
     ],
 
+    'face_ai' => [
+        'url' => env('FACE_AI_URL', 'http://localhost:5000/api/v1/verify-face'),
+    ],
+
 ];

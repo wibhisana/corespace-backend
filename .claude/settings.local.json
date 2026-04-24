@@ -10,7 +10,9 @@
       "Bash(ls d:/development/Laravel/corespace-backend/vendor/blade-ui-kit/blade-heroicons/resources/svg/o-*)",
       "Bash(grep -A 30 'protected $fillable' d:/development/Laravel/corespace-backend/app/Modules/HRIS/Models/Payroll.php)",
       "Bash(composer show:*)",
-      "Bash(php.exe artisan *)"
+      "Bash(php.exe artisan *)",
+      "Bash(php.exe -l app/Modules/HRIS/Controllers/AttendanceApiController.php)",
+      "Bash(php.exe -l app/Modules/IAM/Filament/Resources/Users/Schemas/UserForm.php)"
     ]
   }
 }
