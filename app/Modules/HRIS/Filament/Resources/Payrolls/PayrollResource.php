@@ -36,7 +36,7 @@ class PayrollResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasAnyRole(['HR Manager', 'Super Admin']) ?? true;
+        return auth()->user()?->hasAnyRole(['super_admin', 'hr_manager']) ?? false;
     }
 
     public static function getPages(): array

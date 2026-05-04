@@ -25,10 +25,11 @@ class UserSeeder extends Seeder
         $hseDept = Department::updateOrCreate(['name' => 'HSE / K3'], ['code' => 'HSE']);
 
         // --- 3. BUAT ROLE (Gunakan snake_case - BEST PRACTICE) ---
-        $adminRole = Role::updateOrCreate(['name' => 'super_admin']);
-        $hrRole    = Role::updateOrCreate(['name' => 'hr_manager']);
-        $k3Role    = Role::updateOrCreate(['name' => 'k3_officer']);
-        $staffRole = Role::updateOrCreate(['name' => 'staff']);
+        $adminRole   = Role::updateOrCreate(['name' => 'super_admin']);
+        $hrRole      = Role::updateOrCreate(['name' => 'hr_manager']);
+        $managerRole = Role::updateOrCreate(['name' => 'manager']); // Role baru untuk Head/Manager
+        $k3Role      = Role::updateOrCreate(['name' => 'k3_officer']);
+        $staffRole   = Role::updateOrCreate(['name' => 'staff']);
 
         // --- 4. BUAT USER & ASSIGN ROLE ---
 
@@ -59,11 +60,53 @@ class UserSeeder extends Seeder
         ]);
         $k3->assignRole($k3Role);
 
-        // 👨‍🔧 STAFF (MADE)
-        $staff = User::updateOrCreate(['email' => 'staff@corespace.com'], [
-            'name' => 'Made Staff', 'password' => 'password', 'nik' => 'STF-001',
+        // 👔 IT MANAGER (ATASAN)
+        $itManager = User::updateOrCreate(['email' => 'manager.it@corespace.com'], [
+            'name' => 'Budi IT Manager', 'password' => 'password', 'nik' => 'MGR-IT-001',
             'unit_id' => $mainUnit->id, 'department_id' => $itDept->id,
-            'job_title' => 'Frontend Developer', 'employment_status' => 'Kontrak',
+            'job_title' => 'Head of IT', 'employment_status' => 'Tetap',
+            'join_date' => '2024-02-01', 'gender' => 'L', 'phone_number' => '084444555666',
+        ]);
+        $itManager->assignRole($managerRole);
+
+        // --- 👨‍🔧 STAFF IT (BAWAHAN IT MANAGER) ---
+
+        // 1. IT Operations
+        $itOps = User::updateOrCreate(['email' => 'it.ops@corespace.com'], [
+            'name' => 'Andi IT Ops', 'password' => 'password', 'nik' => 'STF-IT-001',
+            'unit_id' => $mainUnit->id, 'department_id' => $itDept->id,
+            'manager_id' => $itManager->id, // Tautkan ke Manager
+            'job_title' => 'IT Operations', 'employment_status' => 'Tetap',
+            'join_date' => '2024-03-01', 'gender' => 'L', 'phone_number' => '085555666777',
+        ]);
+        $itOps->assignRole($staffRole);
+
+        // 2. DevOps Engineer
+        $devOps = User::updateOrCreate(['email' => 'devops@corespace.com'], [
+            'name' => 'Sari DevOps', 'password' => 'password', 'nik' => 'STF-IT-002',
+            'unit_id' => $mainUnit->id, 'department_id' => $itDept->id,
+            'manager_id' => $itManager->id, // Tautkan ke Manager
+            'job_title' => 'DevOps Engineer', 'employment_status' => 'Tetap',
+            'join_date' => '2024-04-01', 'gender' => 'P', 'phone_number' => '086666777888',
+        ]);
+        $devOps->assignRole($staffRole);
+
+        // 3. UI/UX Designer
+        $uiux = User::updateOrCreate(['email' => 'uiux@corespace.com'], [
+            'name' => 'Joko UI/UX', 'password' => 'password', 'nik' => 'STF-IT-003',
+            'unit_id' => $mainUnit->id, 'department_id' => $itDept->id,
+            'manager_id' => $itManager->id, // Tautkan ke Manager
+            'job_title' => 'UI/UX Designer', 'employment_status' => 'Kontrak',
+            'join_date' => '2024-05-01', 'gender' => 'L', 'phone_number' => '087777888999',
+        ]);
+        $uiux->assignRole($staffRole);
+
+        // 4. Software Engineer (Made)
+        $staff = User::updateOrCreate(['email' => 'staff@corespace.com'], [
+            'name' => 'Made Software Engineer', 'password' => 'password', 'nik' => 'STF-IT-004',
+            'unit_id' => $mainUnit->id, 'department_id' => $itDept->id,
+            'manager_id' => $itManager->id, // Tautkan ke Manager
+            'job_title' => 'Software Engineer', 'employment_status' => 'Kontrak',
             'join_date' => '2024-06-01', 'gender' => 'L', 'phone_number' => '087874063434',
         ]);
         $staff->assignRole($staffRole);
@@ -74,6 +117,6 @@ class UserSeeder extends Seeder
             ['basic_salary' => 8500000, 'bank_name' => 'BCA', 'account_number' => '1234567890']
         );
 
-        $this->command->info('✅ UserSeeder Berhasil: Akun, Unit, Role (snake_case), dan Dept tersimpan.');
+        $this->command->info('✅ UserSeeder Berhasil: Hierarki Manager IT dan Staff berhasil dibuat!');
     }
 }

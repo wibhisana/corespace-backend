@@ -14,7 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
-use App\Modules\IAM\Filament\Resources\Users\RelationManagers\LeaveQuotasRelationManager;
+use App\Modules\IAM\Filament\Resources\Users\RelationManagers\LeaveBalancesRelationManager;
 
 class UserResource extends Resource
 {
@@ -47,7 +47,7 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            LeaveQuotasRelationManager::class,
+            LeaveBalancesRelationManager::class,
         ];
     }
 

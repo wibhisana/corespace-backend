@@ -2,7 +2,7 @@
 
 namespace App\Modules\HRIS\Filament\Resources\Locations;
 
-use App\Modules\IAM\Models\Location;
+use App\Modules\HRIS\Models\Location;
 use App\Modules\HRIS\Filament\Resources\Locations\Pages\CreateLocation;
 use App\Modules\HRIS\Filament\Resources\Locations\Pages\EditLocation;
 use App\Modules\HRIS\Filament\Resources\Locations\Pages\ListLocations;

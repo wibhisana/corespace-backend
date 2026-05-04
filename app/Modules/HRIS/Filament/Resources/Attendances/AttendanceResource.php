@@ -47,10 +47,12 @@ class AttendanceResource extends Resource
         ];
     }
 
-    // Mempertahankan logic otorisasi Anda yang bagus
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasAnyRole(['Super Admin', 'Admin', 'HR Manager']) ?? true;
-        // Note: Saya tambahkan 'true' sbg fallback sementara jika role belum disetup sempurna
+        // K3 officer & manager juga butuh visibility ke log absensi
+        // (k3_officer untuk audit HSE; manager untuk subordinate-nya).
+        return auth()->user()?->hasAnyRole([
+            'super_admin', 'hr_manager', 'k3_officer', 'manager',
+        ]) ?? false;
     }
 }

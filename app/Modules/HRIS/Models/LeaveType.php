@@ -11,7 +11,15 @@ class LeaveType extends Model
         'default_quota',
         'is_unlimited',
         'requires_attachment',
-        'is_active'
+        'is_active',
+        'is_carry_forwardable',
+    ];
+
+    protected $casts = [
+        'is_unlimited'         => 'boolean',
+        'requires_attachment'  => 'boolean',
+        'is_active'            => 'boolean',
+        'is_carry_forwardable' => 'boolean',
     ];
 
     public function balances()

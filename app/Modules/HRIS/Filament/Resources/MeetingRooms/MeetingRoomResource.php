@@ -2,7 +2,7 @@
 
 namespace App\Modules\HRIS\Filament\Resources\MeetingRooms;
 
-use App\Models\MeetingRoom;
+use App\Modules\HRIS\Models\MeetingRoom;
 use App\Modules\HRIS\Filament\Resources\MeetingRooms\Pages\CreateMeetingRoom;
 use App\Modules\HRIS\Filament\Resources\MeetingRooms\Pages\EditMeetingRoom;
 use App\Modules\HRIS\Filament\Resources\MeetingRooms\Pages\ListMeetingRooms;

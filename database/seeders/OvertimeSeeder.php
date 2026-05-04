@@ -27,7 +27,7 @@ class OvertimeSeeder extends Seeder
                 'end_time' => '20:00',
                 'duration_minutes' => 180,
                 'reason' => 'Deadline deployment sistem baru',
-                'status' => 'Approved',
+                'status' => 'approved',
                 'approved_by' => $hr->id,
             ]
         );
@@ -39,7 +39,7 @@ class OvertimeSeeder extends Seeder
                 'end_time' => '19:00',
                 'duration_minutes' => 120,
                 'reason' => 'Fixing bug production',
-                'status' => 'Approved',
+                'status' => 'approved',
                 'approved_by' => $hr->id,
             ]
         );
@@ -51,7 +51,7 @@ class OvertimeSeeder extends Seeder
                 'end_time' => '21:00',
                 'duration_minutes' => 240,
                 'reason' => 'Migrasi database ke server baru',
-                'status' => 'Pending',
+                'status' => 'pending',
             ]
         );
 

@@ -6,23 +6,26 @@ use App\Models\User;
 use App\Modules\HRIS\Models\LeaveType;
 use App\Modules\HRIS\Models\LeaveBalance;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class GenerateYearlyLeaveBalances extends Command
 {
-    // Nama command yang dipanggil di terminal
     protected $signature = 'hris:generate-leave-balances {year?}';
-    protected $description = 'Otomatis generate saldo cuti karyawan untuk tahun tertentu (default tahun depan)';
+    protected $description = 'Generate annual saldo cuti untuk tahun tertentu (default: tahun depan).';
 
     public function handle()
     {
-        // Jika tahun tidak ditentukan, gunakan tahun depan
-        $year = $this->argument('year') ?? now()->addYear()->year;
+        $year = (int) ($this->argument('year') ?? now()->addYear()->year);
+        $expiresAt = Carbon::createFromDate($year, 12, 31)->toDateString();
 
-        $this->info("Memulai proses generate saldo cuti untuk tahun {$year}...");
+        $this->info("Generate saldo annual untuk tahun {$year} (expires {$expiresAt})...");
 
-        $users = User::all(); // Sebaiknya difilter user yang aktif saja
-        $leaveTypes = LeaveType::where('is_active', true)
+        // Hanya user aktif (bukan resigned)
+        $users = User::query()->where('employment_status', '!=', 'Resigned')->get();
+
+        $leaveTypes = LeaveType::query()
+            ->where('is_active', true)
             ->where('is_unlimited', false)
             ->get();
 
@@ -30,17 +33,18 @@ class GenerateYearlyLeaveBalances extends Command
 
         foreach ($users as $user) {
             foreach ($leaveTypes as $type) {
-                // Gunakan firstOrCreate agar tidak menimpa data yang sudah dibuat manual
                 $balance = LeaveBalance::firstOrCreate(
                     [
-                        'user_id' => $user->id,
+                        'user_id'       => $user->id,
                         'leave_type_id' => $type->id,
-                        'year' => $year,
+                        'year'          => $year,
+                        'source'        => LeaveBalance::SOURCE_ANNUAL,
                     ],
                     [
                         'total_quota' => $type->default_quota,
-                        'used_quota' => 0,
-                        'notes' => 'Generated otomatis oleh sistem.',
+                        'used_quota'  => 0,
+                        'expires_at'  => $expiresAt,
+                        'notes'       => 'Generated otomatis oleh sistem.',
                     ]
                 );
 
@@ -50,10 +54,10 @@ class GenerateYearlyLeaveBalances extends Command
             }
         }
 
-        $message = "Berhasil membuat {$count} record saldo cuti baru untuk tahun {$year}.";
+        $message = "Berhasil membuat {$count} record saldo annual baru untuk tahun {$year}.";
         $this->info($message);
         Log::info($message);
 
-        return Command::SUCCESS;
+        return self::SUCCESS;
     }
 }

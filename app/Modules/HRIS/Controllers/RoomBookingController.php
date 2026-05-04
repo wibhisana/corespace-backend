@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Modules\HRIS\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\RoomBooking;
+use App\Modules\HRIS\Models\MeetingRoom;
+use App\Modules\HRIS\Models\RoomBooking;
 use Illuminate\Http\Request;
 
 class RoomBookingController extends Controller
@@ -32,13 +33,16 @@ class RoomBookingController extends Controller
             ], 422);
         }
 
+        $requiresApproval = (bool) MeetingRoom::whereKey($request->meeting_room_id)
+            ->value('requires_approval');
+
         $booking = RoomBooking::create([
             'user_id' => $request->user()->id,
             'meeting_room_id' => $request->meeting_room_id,
             'purpose' => $request->purpose,
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
-            'status' => $request->meetingRoom?->requires_approval ? 'pending' : 'approved',
+            'status' => $requiresApproval ? 'pending' : 'approved',
         ]);
 
         $booking->load('meetingRoom.location');

@@ -28,8 +28,8 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
     protected function gate(): void
     {
         Gate::define('viewHorizon', function ($user = null) {
-            // Hanya Super Admin yang bisa akses Horizon dashboard
-            return $user?->hasRole('Super Admin') ?? false;
+            // Hanya super_admin yang bisa akses Horizon dashboard
+            return $user?->hasRole('super_admin') ?? false;
         });
     }
 }

@@ -17,11 +17,15 @@ class LeaveRequest extends Model
         'reason',
         'attachment_path',
         'status',
+        'approved_by',
+        'approved_at',
+        'rejection_note',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'approved_at' => 'datetime',
     ];
 
     public function user()
@@ -32,5 +36,10 @@ class LeaveRequest extends Model
     public function leaveType()
     {
         return $this->belongsTo(LeaveType::class);
+    }
+
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }

@@ -9,7 +9,11 @@ class OvertimeRequest extends Model
 {
     protected $fillable = [
         'user_id', 'date', 'start_time', 'end_time', 'duration_minutes',
-        'reason', 'status', 'approved_by', 'rejection_note'
+        'reason', 'status', 'approved_by', 'rejection_note',
+    ];
+
+    protected $casts = [
+        'date' => 'date',
     ];
 
     public function user()

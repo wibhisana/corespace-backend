@@ -13,9 +13,11 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
+        // 1. Tambahkan validasi device_name di sini
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
+            'device_name' => 'required|string',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -40,8 +42,8 @@ class AuthController extends Controller
         // Hapus token lama agar tidak menumpuk (opsional, tergantung kebijakan sesi Anda)
         $user->tokens()->delete();
 
-        // Buat token baru untuk Vue.js
-        $token = $user->createToken('vue-client-token')->plainTextToken;
+        // 2. Buat token baru menggunakan nama perangkat dari Vue (misal: 'Web Browser')
+        $token = $user->createToken($request->device_name)->plainTextToken;
 
         // SKENARIO 2: JIKA LOGIN SUKSES
         // Catat CCTV DULU sebelum mengirim respons ke Frontend
@@ -55,7 +57,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login berhasil',
-            'access_token' => $token,
+            'access_token' => $token, // Sesuai dengan yang dicari Vue
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,

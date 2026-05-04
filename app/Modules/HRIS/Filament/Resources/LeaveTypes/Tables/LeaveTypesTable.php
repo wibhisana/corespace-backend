@@ -33,6 +33,10 @@ class LeaveTypesTable
                     ->label('Wajib Lampiran')
                     ->boolean(),
 
+                IconColumn::make('is_carry_forwardable')
+                    ->label('Carry-Forward')
+                    ->boolean(),
+
                 IconColumn::make('is_active')
                     ->label('Aktif')
                     ->boolean(),

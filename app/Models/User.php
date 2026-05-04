@@ -155,12 +155,6 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(\App\Modules\HRIS\Models\Attendance::class);
     }
 
-    // Relasi ke LeaveQuota (Satu Karyawan bisa punya banyak LeaveQuota untuk tahun yang berbeda)
-    public function leaveQuotas()
-    {
-        return $this->hasMany(\App\Modules\HRIS\Models\LeaveQuota::class);
-    }
-
     public function attendanceGroup()
     {
         return $this->belongsTo(AttendanceGroup::class);

@@ -38,6 +38,12 @@ class LeaveTypeForm
                             ->label('Wajib Lampiran')
                             ->helperText('Karyawan wajib mengunggah dokumen pendukung (Cth: Surat Dokter).'),
 
+                        Toggle::make('is_carry_forwardable')
+                            ->label('Bisa Carry-Forward')
+                            ->helperText('Sisa cuti di akhir tahun bisa dibawa ke tahun berikutnya (mis. Cuti Tahunan). Diproses oleh command hris:generate-carry-forward.')
+                            ->disabled(fn (Get $get) => $get('is_unlimited'))
+                            ->default(false),
+
                         Toggle::make('is_active')
                             ->label('Status Aktif')
                             ->default(true),

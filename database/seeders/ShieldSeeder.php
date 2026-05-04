@@ -48,7 +48,31 @@ class ShieldSeeder extends Seeder
         $k3 = Role::firstOrCreate(['name' => 'k3_officer']);
         $k3->syncPermissions($this->resolvePermissions($k3Perms));
 
-        // 4. STAFF
+        // 4. MANAGER (lini supervisor — approval bawahan langsung)
+        // Scope per-row (lihat subordinate-nya saja, bukan semua karyawan)
+        // sudah di-handle di Resource::getEloquentQuery() & Policy::approve().
+        // Permission Shield di sini hanya gate level "boleh akses Resource/Action mana".
+        $managerPerms = collect()
+            // Lihat data karyawan untuk konteks (scope filter di Resource)
+            ->merge(['ViewAny:User', 'View:User'])
+            ->merge(['ViewAny:Department', 'View:Department'])
+            // Absensi & saldo cuti subordinate (read-only)
+            ->merge(['ViewAny:Attendance', 'View:Attendance'])
+            ->merge(['ViewAny:LeaveType', 'View:LeaveType'])
+            ->merge(['ViewAny:LeaveBalance', 'View:LeaveBalance'])
+            // Cuti & lembur — view + approve/reject untuk subordinate
+            ->merge(['ViewAny:LeaveRequest', 'View:LeaveRequest', 'Create:LeaveRequest',
+                     'Approve:LeaveRequest', 'Reject:LeaveRequest'])
+            ->merge(['ViewAny:OvertimeRequest', 'View:OvertimeRequest', 'Create:OvertimeRequest',
+                     'Approve:OvertimeRequest', 'Reject:OvertimeRequest'])
+            // Manager juga karyawan — bisa booking room
+            ->merge(['ViewAny:MeetingRoom', 'View:MeetingRoom'])
+            ->unique();
+
+        $manager = Role::firstOrCreate(['name' => 'manager']);
+        $manager->syncPermissions($this->resolvePermissions($managerPerms));
+
+        // 5. STAFF
         $staffPerms = collect([
             'ViewAny:Payroll', 'View:Payroll',
             'ViewAny:LeaveRequest', 'View:LeaveRequest', 'Create:LeaveRequest',

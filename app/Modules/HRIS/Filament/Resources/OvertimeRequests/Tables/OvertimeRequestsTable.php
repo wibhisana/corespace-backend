@@ -33,10 +33,11 @@ class OvertimeRequestsTable
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
                     ->color(fn (string $state): string => match ($state) {
-                        'Approved' => 'success',
-                        'Rejected' => 'danger',
-                        'Pending' => 'warning',
+                        'approved' => 'success',
+                        'rejected' => 'danger',
+                        'pending' => 'warning',
                         default => 'gray',
                     }),
 
@@ -49,9 +50,9 @@ class OvertimeRequestsTable
             ->filters([
                 SelectFilter::make('status')
                     ->options([
-                        'Pending' => 'Pending',
-                        'Approved' => 'Approved',
-                        'Rejected' => 'Rejected',
+                        'pending' => 'Pending',
+                        'approved' => 'Approved',
+                        'rejected' => 'Rejected',
                     ]),
             ])
             ->recordActions([

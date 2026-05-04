@@ -69,7 +69,7 @@ class ListPayrolls extends ListRecords
                         $totalOvertimeMinutes = OvertimeRequest::where('user_id', $user->id)
                             ->whereMonth('date', $data['month'])
                             ->whereYear('date', $data['year'])
-                            ->where('status', 'Approved')
+                            ->where('status', 'approved')
                             ->sum('duration_minutes');
 
                         $overtimeAllowance = round($totalOvertimeMinutes * (50000 / 60));

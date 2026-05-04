@@ -12,7 +12,22 @@
       "Bash(composer show:*)",
       "Bash(php.exe artisan *)",
       "Bash(php.exe -l app/Modules/HRIS/Controllers/AttendanceApiController.php)",
-      "Bash(php.exe -l app/Modules/IAM/Filament/Resources/Users/Schemas/UserForm.php)"
+      "Bash(php.exe -l app/Modules/IAM/Filament/Resources/Users/Schemas/UserForm.php)",
+      "Bash(grep -n 'protected.*$heading\\\\|protected.*$sort' vendor/filament/widgets/src/ChartWidget.php vendor/filament/widgets/src/Widget.php)",
+      "Bash(grep -n '$heading' vendor/filament/widgets/src/ChartWidget.php)",
+      "PowerShell(php artisan route:list --except-vendor 2>&1)",
+      "PowerShell(php artisan optimize:clear 2>&1)",
+      "PowerShell(php artisan route:list --path=api/hris 2>&1)",
+      "PowerShell(php artisan route:list --path=api/hris/attendances --columns=method,uri,middleware 2>&1)",
+      "PowerShell(php artisan route:list --path=api/hris/attendances -v 2>&1)",
+      "PowerShell(php artisan route:list --path=api/hris/approvals -v 2>&1)",
+      "PowerShell(php artisan route:list --path=api 2>&1)",
+      "PowerShell(php artisan route:list --path=api/iam 2>&1)",
+      "PowerShell(php artisan migrate:status 2>&1)",
+      "PowerShell(php artisan migrate --pretend 2>&1)",
+      "PowerShell(php artisan hris:generate-carry-forward --help 2>&1)",
+      "PowerShell(php artisan about --only=environment 2>&1)",
+      "PowerShell(php artisan migrate --pretend --path=database/migrations/2026_04_24_140000_add_is_carry_forwardable_to_leave_types.php 2>&1)"
     ]
   }
 }

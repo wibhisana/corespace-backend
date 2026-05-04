@@ -58,11 +58,11 @@ class OvertimeRequestForm
                         Select::make('status')
                             ->label('Status Persetujuan')
                             ->options([
-                                'Pending' => 'Menunggu (Pending)',
-                                'Approved' => 'Disetujui (Approved)',
-                                'Rejected' => 'Ditolak (Rejected)',
+                                'pending' => 'Menunggu (Pending)',
+                                'approved' => 'Disetujui (Approved)',
+                                'rejected' => 'Ditolak (Rejected)',
                             ])
-                            ->default('Pending')
+                            ->default('pending')
                             ->required()
                             ->live(),
 
@@ -75,8 +75,8 @@ class OvertimeRequestForm
 
                         Textarea::make('rejection_note')
                             ->label('Catatan Penolakan')
-                            ->required(fn (Get $get) => $get('status') === 'Rejected')
-                            ->hidden(fn (Get $get) => $get('status') !== 'Rejected')
+                            ->required(fn (Get $get) => $get('status') === 'rejected')
+                            ->hidden(fn (Get $get) => $get('status') !== 'rejected')
                             ->columnSpanFull(),
                     ]),
             ]);

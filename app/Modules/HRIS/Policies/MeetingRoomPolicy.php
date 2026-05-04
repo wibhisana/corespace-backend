@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Policies;
+namespace App\Modules\HRIS\Policies;
 
 use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Modules\HRIS\Models\MeetingRoom;

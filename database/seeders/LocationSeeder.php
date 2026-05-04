@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Location;
-use App\Models\MeetingRoom;
+use App\Modules\HRIS\Models\Location;
+use App\Modules\HRIS\Models\MeetingRoom;
 use Illuminate\Database\Seeder;
 
 class LocationSeeder extends Seeder

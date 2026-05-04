@@ -4,7 +4,10 @@ namespace App\Modules\IAM\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\HRIS\Models\EmployeeFinance;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
 {
@@ -58,6 +61,41 @@ class ProfileController extends Controller
             'message' => 'Profil berhasil diperbarui.',
             'data' => $user,
             'is_profile_complete' => $user->isProfileComplete(),
+        ]);
+    }
+
+    /**
+     * POST /api/iam/change-password
+     * Karyawan mengubah password sendiri (sudah login).
+     * - Wajib verifikasi password lama.
+     * - Password baru pakai konfirmasi (new_password_confirmation).
+     * - Cabut semua token lain agar sesi lama tidak ikut terbawa.
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password'     => 'required|string|min:8|confirmed|different:current_password',
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($request->input('current_password'), $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['Password saat ini tidak sesuai.'],
+            ]);
+        }
+
+        $user->password = $request->input('new_password');
+        $user->save();
+
+        $currentTokenId = optional($user->currentAccessToken())->id;
+        if ($currentTokenId) {
+            $user->tokens()->where('id', '!=', $currentTokenId)->delete();
+        }
+
+        return response()->json([
+            'message' => 'Password berhasil diperbarui.',
         ]);
     }
 }

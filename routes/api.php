@@ -1,32 +1,47 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| LEGACY API ROUTES — DEPRECATED
+|--------------------------------------------------------------------------
+| URL di file ini dipertahankan sementara demi backward compatibility
+| dengan mobile/web client yang belum migrasi ke rute modular.
+|
+| Target baru:
+|   - /api/iam/*   -> app/Modules/IAM/Routes/api.php
+|   - /api/hris/*  -> app/Modules/HRIS/Routes/api.php
+|
+| Semua rute di bawah ini (kecuali /login & /logout legacy) sudah di-repoint
+| ke controller modul. /login & /logout legacy tetap memakai LegacyAuthController
+| karena response shape-nya (`token`, `job_title`) berbeda dengan versi modul
+| (`access_token`, `department`, `roles`) — menghindari breaking change di mobile.
+|
+| TODO: hapus file ini setelah seluruh client migrate ke rute modular.
+| Target deprecation: <isi tanggal>.
+*/
+
+use App\Http\Controllers\Api\AuthController as LegacyAuthController;
+use App\Modules\HRIS\Controllers\AttendanceApiController;
+use App\Modules\HRIS\Controllers\LeaveRequestApiController;
+use App\Modules\HRIS\Controllers\WhatsAppBotController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AttendanceApiController;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\LeaveRequestApiController;
-use App\Modules\HRIS\Controllers\WhatsAppBotController;
 
-# PUBLIC ROUTES (Tidak butuh token)
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+// Legacy auth — tetap ke controller legacy untuk preserve response shape
+Route::post('/login', [LegacyAuthController::class, 'login'])->middleware('throttle:login');
+Route::post('/logout', [LegacyAuthController::class, 'logout'])->middleware('auth:sanctum');
 
-// 💡 Rute Webhook WA Bot Fonnte
+// Legacy webhook — repoint ke modul (behavior sama)
 Route::post('/webhook/whatsapp', [WhatsAppBotController::class, 'handleWebhook']);
 
-# PROTECTED ROUTES (Wajib bawa Bearer Token)
+// Legacy protected routes — repoint ke modul
 Route::middleware('auth:sanctum')->group(function () {
-
-    // Cek User Profile
     Route::get('/user', function (Request $request) {
         return response()->json(['data' => $request->user()->load(['unit', 'department'])]);
     });
 
-    // Absensi (Clock-in)
-    Route::post('/attendance/clock-in', [AttendanceApiController::class, 'clockIn'])->middleware('throttle:clock-in');
+    Route::post('/attendance/clock-in', [AttendanceApiController::class, 'clockIn'])
+        ->middleware('throttle:clock-in');
 
-    // Leave Request (Mobile)
     Route::post('/leave-request', [LeaveRequestApiController::class, 'store']);
-
-    // Logout
-    Route::post('/logout', [AuthController::class, 'logout']);
 });
