@@ -5,8 +5,6 @@ use App\Modules\IAM\Controllers\AuthController;
 use App\Modules\IAM\Controllers\LogApiController;
 use App\Modules\IAM\Controllers\ProfileController;
 use App\Modules\IAM\Controllers\UserManagementController;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // ==========================================
@@ -23,24 +21,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // Profil diri
-    Route::get('/me', function (Request $request) {
-        $user = $request->user()->load('department', 'roles', 'employeeFinance');
-
-        $hasClockedIn = $user->attendances()
-            ->where('date', Carbon::today()->toDateString())
-            ->where('type', 'in')
-            ->exists();
-
-        return response()->json([
-            'user' => $user,
-            'is_profile_complete' => $user->isProfileComplete(),
-            'attendance_status' => [
-                'has_clocked_in' => $hasClockedIn,
-                'reminder_message' => $hasClockedIn ? null : 'Anda belum melakukan absensi hari ini.',
-            ],
-            'unread_notifications' => $user->unreadNotifications,
-        ]);
-    });
+    Route::get('/me', [AuthController::class, 'me']);
 
     // ESS: update profil sendiri
     Route::put('/profile', [ProfileController::class, 'update']);

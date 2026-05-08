@@ -27,7 +27,17 @@
       "PowerShell(php artisan migrate --pretend 2>&1)",
       "PowerShell(php artisan hris:generate-carry-forward --help 2>&1)",
       "PowerShell(php artisan about --only=environment 2>&1)",
-      "PowerShell(php artisan migrate --pretend --path=database/migrations/2026_04_24_140000_add_is_carry_forwardable_to_leave_types.php 2>&1)"
+      "PowerShell(php artisan migrate --pretend --path=database/migrations/2026_04_24_140000_add_is_carry_forwardable_to_leave_types.php 2>&1)",
+      "Read(//d/development/Laravel/**)",
+      "Read(//d/development/**)",
+      "PowerShell(php artisan route:clear)",
+      "PowerShell(php artisan config:clear)",
+      "PowerShell(php artisan cache:clear)",
+      "PowerShell(php artisan route:cache)",
+      "PowerShell(php artisan config:cache)",
+      "PowerShell(php artisan route:list --path=api/iam/me)",
+      "Bash(Get-ChildItem -Path . -Directory)",
+      "Bash(Select-Object Name)"
     ]
   }
 }

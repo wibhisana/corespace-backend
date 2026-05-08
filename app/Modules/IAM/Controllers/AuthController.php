@@ -5,6 +5,7 @@ namespace App\Modules\IAM\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\IAM\Models\AuthLog;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -13,11 +14,11 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        // 1. Tambahkan validasi device_name di sini
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
             'device_name' => 'required|string',
+            'remember_me' => 'sometimes|boolean',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -39,11 +40,16 @@ class AuthController extends Controller
             ]);
         }
 
-        // Hapus token lama agar tidak menumpuk (opsional, tergantung kebijakan sesi Anda)
-        $user->tokens()->delete();
+        // Revoke token lama. Hidrasi → loop → delete() agar event `deleted`
+        // ter-fire dan cache Redis ikut dibersihkan; `tokens()->delete()` lewat
+        // query builder akan melewati model events.
+        $user->tokens->each->delete();
 
-        // 2. Buat token baru menggunakan nama perangkat dari Vue (misal: 'Web Browser')
-        $token = $user->createToken($request->device_name)->plainTextToken;
+        // Remember me: 30 hari, default 60 menit.
+        $ttlMinutes = $request->boolean('remember_me') ? 60 * 24 * 30 : 60;
+        $expiresAt = now()->addMinutes($ttlMinutes);
+
+        $token = $user->createToken($request->device_name, ['*'], $expiresAt)->plainTextToken;
 
         // SKENARIO 2: JIKA LOGIN SUKSES
         // Catat CCTV DULU sebelum mengirim respons ke Frontend
@@ -55,17 +61,46 @@ class AuthController extends Controller
             'message' => 'Login berhasil'
         ]);
 
+        // Muat relasi yang sama persis dengan endpoint /me agar frontend
+        // bisa fallback ke payload login ketika /me gagal.
+        $user->load('department', 'roles', 'employeeFinance');
+
+        $hasClockedIn = $user->attendances()
+            ->where('date', Carbon::today()->toDateString())
+            ->where('type', 'in')
+            ->exists();
+
         return response()->json([
             'message' => 'Login berhasil',
-            'access_token' => $token, // Sesuai dengan yang dicari Vue
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                // Mengambil nama departemen dan role sekaligus
-                'department' => $user->department ? $user->department->name : null,
-                'roles' => $user->getRoleNames(),
-            ]
+            'access_token' => $token,
+            'token_expires_at' => $expiresAt->toIso8601String(),
+            'user' => $user,
+            'is_profile_complete' => $user->isProfileComplete(),
+            'attendance_status' => [
+                'has_clocked_in' => $hasClockedIn,
+                'reminder_message' => $hasClockedIn ? null : 'Anda belum melakukan absensi hari ini.',
+            ],
+            'unread_notifications' => $user->unreadNotifications,
+        ]);
+    }
+
+    public function me(Request $request)
+    {
+        $user = $request->user()->load('department', 'roles', 'employeeFinance');
+
+        $hasClockedIn = $user->attendances()
+            ->where('date', Carbon::today()->toDateString())
+            ->where('type', 'in')
+            ->exists();
+
+        return response()->json([
+            'user' => $user,
+            'is_profile_complete' => $user->isProfileComplete(),
+            'attendance_status' => [
+                'has_clocked_in' => $hasClockedIn,
+                'reminder_message' => $hasClockedIn ? null : 'Anda belum melakukan absensi hari ini.',
+            ],
+            'unread_notifications' => $user->unreadNotifications,
         ]);
     }
 
